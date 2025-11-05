@@ -13,6 +13,11 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear loading message
       activitiesList.innerHTML = "";
 
+      // Ensure select keeps only the placeholder option before adding new ones
+      while (activitySelect.options.length > 1) {
+        activitySelect.remove(1);
+      }
+
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
@@ -20,13 +25,47 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const spotsLeft = details.max_participants - details.participants.length;
 
+        // Basic content (use textContent later to add participants safely)
         activityCard.innerHTML = `
-          <h4>${name}</h4>
-          <p>${details.description}</p>
-          <p><strong>Schedule:</strong> ${details.schedule}</p>
-          <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <h4></h4>
+          <p class="activity-description"></p>
+          <p><strong>Schedule:</strong> <span class="activity-schedule"></span></p>
+          <p><strong>Availability:</strong> <span class="activity-availability"></span></p>
         `;
 
+        // Fill textual fields safely
+        activityCard.querySelector("h4").textContent = name;
+        activityCard.querySelector(".activity-description").textContent = details.description;
+        activityCard.querySelector(".activity-schedule").textContent = details.schedule;
+        activityCard.querySelector(".activity-availability").textContent = `${spotsLeft} spots left`;
+
+        // Participants block
+        const participantsDiv = document.createElement("div");
+        participantsDiv.className = "participants";
+
+        const participantsHeader = document.createElement("div");
+        participantsHeader.className = "participants-header";
+        participantsHeader.textContent = "Participants:";
+        participantsDiv.appendChild(participantsHeader);
+
+        if (Array.isArray(details.participants) && details.participants.length > 0) {
+          const ul = document.createElement("ul");
+          ul.className = "participants-list";
+          details.participants.forEach((p) => {
+            const li = document.createElement("li");
+            li.className = "participant-item";
+            li.textContent = p; // assume p is an email or name; use textContent to avoid XSS
+            ul.appendChild(li);
+          });
+          participantsDiv.appendChild(ul);
+        } else {
+          const emptyP = document.createElement("p");
+          emptyP.className = "no-participants";
+          emptyP.textContent = "No participants yet";
+          participantsDiv.appendChild(emptyP);
+        }
+
+        activityCard.appendChild(participantsDiv);
         activitiesList.appendChild(activityCard);
 
         // Add option to select dropdown
